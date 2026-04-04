@@ -28,14 +28,16 @@ const Navbar = () => {
       <div className="navbar-brand">
         <Link to="/dashboard">MSL Engagement</Link>
       </div>
-      
+
       <div className="navbar-menu">
         <Link to="/dashboard" className="nav-link">Dashboard</Link>
         {(user?.role === 'BL' || user?.role === 'BM') && (
           <Link to="/requests/new" className="nav-link">New Request</Link>
         )}
         <Link to="/requests" className="nav-link">Requests</Link>
-        <Link to="/doctors" className="nav-link">Doctors</Link>
+        {(user?.role === 'BL' || user?.role === 'BM') && (
+          <Link to="/doctors" className="nav-link">Doctors</Link>
+        )}
       </div>
 
       <div className="navbar-user">

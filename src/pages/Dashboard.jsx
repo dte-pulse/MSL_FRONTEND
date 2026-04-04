@@ -22,20 +22,20 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const params = user?.role === 'BL' || user?.role === 'BM' 
+      const params = user?.role === 'BL' || user?.role === 'BM'
         ? { requested_by: user.username, role: user.role }
         : {};
-      
+
       const response = await requestService.getRequests(params);
       const requests = response.data;
-      
+
       setStats({
         totalRequests: requests.length,
         pendingRequests: requests.filter(r => r.status === 'Pending').length,
         inProgressRequests: requests.filter(r => r.status === 'In Progress').length,
         completedRequests: requests.filter(r => r.status === 'Completed').length,
       });
-      
+
       setRecentRequests(requests.slice(0, 5));
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -58,45 +58,45 @@ const Dashboard = () => {
     switch (user?.role) {
       case 'BL':
       case 'BM':
-        return (
-          <div className="role-section">
-            <h2>Business Dashboard</h2>
-            <p>Create and manage MSL engagement requests for your doctors.</p>
-            <div className="quick-actions">
-              <Link to="/requests/new" className="action-btn primary">
-                + New Engagement Request
-              </Link>
-              <Link to="/requests" className="action-btn secondary">
-                View All Requests
-              </Link>
-            </div>
-          </div>
-        );
+      // return (
+      //   <div className="role-section">
+      //     <h2>Business Dashboard</h2>
+      //     <p>Create and manage MSL engagement requests for your doctors.</p>
+      //     <div className="quick-actions">
+      //       <Link to="/requests/new" className="action-btn primary">
+      //         + New Engagement Request
+      //       </Link>
+      //       <Link to="/requests" className="action-btn secondary">
+      //         View All Requests
+      //       </Link>
+      //     </div>
+      //   </div>
+      // );
       case 'MSL':
-        return (
-          <div className="role-section">
-            <h2>MSL Dashboard</h2>
-            <p>View assigned requests and log your interactions with doctors.</p>
-            <div className="quick-actions">
-              <Link to="/requests" className="action-btn primary">
-                View My Requests
-              </Link>
-            </div>
-          </div>
-        );
-      case 'MSL Manager':
-      case 'HOD':
-        return (
-          <div className="role-section">
-            <h2>Management Dashboard</h2>
-            <p>Oversee all MSL engagement activities and track outcomes.</p>
-            <div className="quick-actions">
-              <Link to="/requests" className="action-btn primary">
-                View All Requests
-              </Link>
-            </div>
-          </div>
-        );
+      // return (
+      //   <div className="role-section">
+      //     <h2>MSL Dashboard</h2>
+      //     <p>View assigned requests and log your interactions with doctors.</p>
+      //     <div className="quick-actions">
+      //       <Link to="/requests" className="action-btn primary">
+      //         View My Requests
+      //       </Link>
+      //     </div>
+      //   </div>
+      // );
+      // case 'MSL Manager':
+      // case 'HOD':
+      //   return (
+      //     <div className="role-section">
+      //       <h2>Management Dashboard</h2>
+      //       <p>Oversee all MSL engagement activities and track outcomes.</p>
+      //       <div className="quick-actions">
+      //         <Link to="/requests" className="action-btn primary">
+      //           View All Requests
+      //         </Link>
+      //       </div>
+      //     </div>
+      //   );
       default:
         return null;
     }
@@ -148,9 +148,9 @@ const Dashboard = () => {
         ) : (
           <div className="recent-list">
             {recentRequests.map((request) => (
-              <Link 
-                to={`/requests/${request.id}`} 
-                key={request.id} 
+              <Link
+                to={`/requests/${request.id}`}
+                key={request.id}
                 className="recent-item"
               >
                 <div className="recent-info">

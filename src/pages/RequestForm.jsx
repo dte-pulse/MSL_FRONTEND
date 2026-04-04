@@ -7,6 +7,13 @@ import '../styles/RequestForm.css';
 const PRIORITIES = ['High', 'Medium', 'Low'];
 const STATUSES = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected', 'On Hold'];
 
+const TERRITORY_REGIONS_MAP = {
+  'North': ['Delhi', 'Punjab', 'Haryana', 'UP', 'Uttarakhand', 'Himachal Pradesh', 'J&K'],
+  'South': ['Tamil Nadu', 'Kerala', 'Karnataka', 'Andhra Pradesh', 'Telangana'],
+  'East': ['West Bengal', 'Bihar', 'Odisha', 'Jharkhand', 'Assam'],
+  'West': ['Maharashtra', 'Gujarat', 'Rajasthan', 'Madhya Pradesh', 'Goa']
+};
+
 const RequestForm = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -17,6 +24,8 @@ const RequestForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
+    territory: '',
+    region: '',
     doctor_id: '',
     therapy_area: '',
     objective: '',
@@ -55,10 +64,19 @@ const RequestForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'territory') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        region: ''
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleDoctorChange = (e) => {
@@ -84,8 +102,9 @@ const RequestForm = () => {
     }
 
     try {
+      const { territory, region, ...formDataWithoutLocation } = formData;
       const requestData = {
-        ...formData,
+        ...formDataWithoutLocation,
         doctor_id: parseInt(formData.doctor_id),
         requested_by: user.username,
         requested_by_role: user.role,
@@ -125,6 +144,43 @@ const RequestForm = () => {
 
         <div className="form-section">
           <h3>Doctor Information</h3>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="territory">Territory *</label>
+              <select
+                id="territory"
+                name="territory"
+                value={formData.territory}
+                onChange={handleChange}
+                className="form-control"
+                required
+              >
+                <option value="">-- Select Territory --</option>
+                {Object.keys(TERRITORY_REGIONS_MAP).map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="region">Region *</label>
+              <select
+                id="region"
+                name="region"
+                value={formData.region}
+                onChange={handleChange}
+                className="form-control"
+                required
+                disabled={!formData.territory}
+              >
+                <option value="">-- Select Region --</option>
+                {formData.territory && TERRITORY_REGIONS_MAP[formData.territory].map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
           <div className="form-group">
             <label htmlFor="doctor_id">Doctor Name *</label>
@@ -167,9 +223,9 @@ const RequestForm = () => {
               id="therapy_area"
               name="therapy_area"
               value={formData.therapy_area}
-              onChange={handleChange}
               className="form-control"
-              placeholder="e.g., Cardiology, Oncology"
+              placeholder="e.g., Cardiology, Oncology (Auto-filled)"
+              readOnly
             />
           </div>
         </div>
