@@ -1,19 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { requestService, interactionService, activityService } from '../services/api';
+import { requestService, interactionService } from '../services/api';
 import '../styles/RequestDetail.css';
 
-const STATUSES = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected', 'On Hold'];
+const STATUSES = ['potential', 'non-potential'];
 const SCIENTIFIC_DEPTHS = ['Basic', 'Intermediate', 'Advanced', 'Expert'];
 const ENGAGEMENT_LEVELS = ['Low', 'Moderate', 'High', 'Very High'];
-const ACTIVITY_CATEGORIES = [
-  'Literature Review',
-  'Content Development',
-  'Training',
-  'Strategy Meetings',
-  'Advisory Board Preparation'
-];
+
 
 const OUTCOME_OPTIONS = [
   'doctor appreciated the discussion',
@@ -32,7 +26,6 @@ const RequestDetail = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('summary');
   const [showInteractionForm, setShowInteractionForm] = useState(false);
-  const [showActivityForm, setShowActivityForm] = useState(false);
 
   // Form states
   const [interactionForm, setInteractionForm] = useState({
@@ -47,12 +40,7 @@ const RequestDetail = () => {
     outcomes: ''
   });
 
-  const [activityForm, setActivityForm] = useState({
-    activity_date: '',
-    activity_category: '',
-    summary: '',
-    linked_outputs: ''
-  });
+
 
   useEffect(() => {
     fetchRequestData();
@@ -65,7 +53,13 @@ const RequestDetail = () => {
         requestService.getRequest(id),
         requestService.getLogs(id)
       ]);
-      setRequest(requestRes.data);
+      const requestData = requestRes.data;
+      // Map user_classification to status for UI consistency
+      if (requestData.user_classification) {
+        requestData.status = requestData.user_classification;
+      }
+      
+      setRequest(requestData);
       setLogs(logsRes.data);
 
       // Pre-fill doctor name for interaction form
@@ -119,26 +113,7 @@ const RequestDetail = () => {
     }
   };
 
-  const handleActivitySubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await activityService.createActivity({
-        ...activityForm,
-        request_id: parseInt(id)
-      });
-      setShowActivityForm(false);
-      setActivityForm({
-        activity_date: '',
-        activity_category: '',
-        summary: '',
-        linked_outputs: ''
-      });
-      fetchRequestData();
-    } catch (error) {
-      console.error('Error creating activity:', error);
-      alert('Failed to log activity');
-    }
-  };
+
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
@@ -149,6 +124,7 @@ const RequestDetail = () => {
   };
 
   const getStatusClass = (status) => {
+    if (!status) return 'unknown';
     return status.toLowerCase().replace(' ', '-');
   };
 
@@ -160,8 +136,8 @@ const RequestDetail = () => {
     return <div className="error">Request not found</div>;
   }
 
-  const canLogActivities = user?.role === 'MSL';
-  const canChangeStatus = user?.role === 'MSL Manager' || user?.role === 'HOD';
+  const canLogActivities = user?.role === 'MSL' || user?.role === 'Scientific Officer';
+  const canChangeStatus = ['Asst General Manager', 'Associate Vice President', 'SBUH/BH'].includes(user?.role);
 
   return (
     <div className="request-detail-container">
@@ -172,7 +148,7 @@ const RequestDetail = () => {
         </div>
         <div className="header-right">
           <span className={`status-badge-large ${getStatusClass(request.status)}`}>
-            {request.status}
+            {request.status === 'potential' ? 'Potential User' : 'Not a Potential User'}
           </span>
           {canChangeStatus && (
             <select
@@ -181,7 +157,9 @@ const RequestDetail = () => {
               className="status-select"
             >
               {STATUSES.map(s => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>
+                  {s === 'potential' ? 'Potential User' : 'Not a Potential User'}
+                </option>
               ))}
             </select>
           )}
@@ -200,7 +178,7 @@ const RequestDetail = () => {
           </div>
           <div className="info-item">
             <label>Priority</label>
-            <value className={`priority ${request.priority?.toLowerCase()}`}>{request.priority}</value>
+            <value className={`priority ${(request.priority || '').toLowerCase()}`}>{request.priority || 'Normal'}</value>
           </div>
           <div className="info-item">
             <label>Requested By</label>
@@ -235,19 +213,13 @@ const RequestDetail = () => {
           >
             Activity Summary
           </button>
-          <button
-            className={`tab ${activeTab === 'interactions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('interactions')}
-          >
-            Doctor Interactions ({request.doctor_interactions?.length || 0})
-          </button>
-          <button
-            className={`tab ${activeTab === 'activities' ? 'active' : ''}`}
-            onClick={() => setActiveTab('activities')}
-          >
-            Office Activities ({request.office_activities?.length || 0})
-          </button>
-        </div>
+            <button
+              className={`tab ${activeTab === 'interactions' ? 'active' : ''}`}
+              onClick={() => setActiveTab('interactions')}
+            >
+              Doctor Interactions ({request.doctor_interactions?.length || 0})
+            </button>
+          </div>
 
         {activeTab === 'summary' && (
           <div className="tab-content">
@@ -261,12 +233,6 @@ const RequestDetail = () => {
                   >
                     + Log Doctor Visit
                   </button>
-                  <button
-                    onClick={() => setShowActivityForm(true)}
-                    className="action-btn secondary"
-                  >
-                    + Log Office Activity
-                  </button>
                 </div>
               )}
             </div>
@@ -275,7 +241,7 @@ const RequestDetail = () => {
               <div className="empty-timeline">
                 <p>No activities logged yet.</p>
                 {canLogActivities && (
-                  <p>Start by logging a doctor interaction or office activity.</p>
+                  <p>Start by logging a doctor interaction.</p>
                 )}
               </div>
             ) : (
@@ -286,7 +252,7 @@ const RequestDetail = () => {
                     <div className="timeline-content">
                       <div className="timeline-header">
                         <span className="timeline-type">
-                          {log.type === 'doctor_interaction' ? '👨‍⚕️ Doctor Visit' : '🏢 Office Activity'}
+                           👨‍⚕️ Doctor Visit
                         </span>
                         <span className="timeline-date">{formatDate(log.date)}</span>
                       </div>
@@ -349,40 +315,7 @@ const RequestDetail = () => {
           </div>
         )}
 
-        {activeTab === 'activities' && (
-          <div className="tab-content">
-            <div className="section-header">
-              <h2>Office Activities</h2>
-              {canLogActivities && (
-                <button
-                  onClick={() => setShowActivityForm(true)}
-                  className="action-btn"
-                >
-                  + Log Activity
-                </button>
-              )}
-            </div>
 
-            {request.office_activities?.length === 0 ? (
-              <div className="empty-state">No office activities logged yet.</div>
-            ) : (
-              <div className="activities-list">
-                {request.office_activities?.map(activity => (
-                  <div key={activity.id} className="activity-card">
-                    <div className="activity-header">
-                      <h4>{activity.activity_category}</h4>
-                      <span className="date">{formatDate(activity.activity_date)}</span>
-                    </div>
-                    <p>{activity.summary}</p>
-                    {activity.linked_outputs && (
-                      <p className="outputs"><strong>Outputs:</strong> {activity.linked_outputs}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Doctor Interaction Modal */}
@@ -507,65 +440,7 @@ const RequestDetail = () => {
         </div>
       )}
 
-      {/* Office Activity Modal */}
-      {showActivityForm && (
-        <div className="modal-overlay" onClick={() => setShowActivityForm(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2>Log Office Activity</h2>
-            <form onSubmit={handleActivitySubmit}>
-              <div className="form-group">
-                <label>Date</label>
-                <input
-                  type="date"
-                  value={activityForm.activity_date}
-                  onChange={e => setActivityForm({ ...activityForm, activity_date: e.target.value })}
-                  className="form-control"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Activity Category</label>
-                <select
-                  value={activityForm.activity_category}
-                  onChange={e => setActivityForm({ ...activityForm, activity_category: e.target.value })}
-                  className="form-control"
-                  required
-                >
-                  <option value="">Select Category</option>
-                  {ACTIVITY_CATEGORIES.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Summary of Work Done</label>
-                <textarea
-                  value={activityForm.summary}
-                  onChange={e => setActivityForm({ ...activityForm, summary: e.target.value })}
-                  className="form-control"
-                  rows="3"
-                />
-              </div>
-              <div className="form-group">
-                <label>Linked Outputs (if any)</label>
-                <textarea
-                  value={activityForm.linked_outputs}
-                  onChange={e => setActivityForm({ ...activityForm, linked_outputs: e.target.value })}
-                  className="form-control"
-                  rows="2"
-                  placeholder="e.g., Presentation slides, Report, Training materials"
-                />
-              </div>
-              <div className="modal-actions">
-                <button type="button" onClick={() => setShowActivityForm(false)} className="btn-secondary">
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary">Save Activity</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };
