@@ -4,9 +4,25 @@ import { useAuth } from '../context/AuthContext';
 import { requestService, interactionService, activityService } from '../services/api';
 import '../styles/RequestDetail.css';
 
-const STATUSES = ['potential', 'non-potential'];
+const STATUSES = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected', 'On Hold'];
 const SCIENTIFIC_DEPTHS = ['Basic', 'Intermediate', 'Advanced', 'Expert'];
 const ENGAGEMENT_LEVELS = ['Low', 'Moderate', 'High', 'Very High'];
+const ACTIVITY_CATEGORIES = [
+  'Literature Review',
+  'Content Development',
+  'Training',
+  'Strategy Meetings',
+  'Advisory Board Preparation'
+];
+
+const OUTCOME_OPTIONS = [
+  'doctor appreciated the discussion',
+  'doctor posted scientific query',
+  'doctor asked to meet again',
+  'doctor likely to be associated with pulse',
+  'RX prescription initiated',
+  'no response'
+];
 
 const RequestDetail = () => {
   const { id } = useParams();
@@ -16,6 +32,7 @@ const RequestDetail = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('summary');
   const [showInteractionForm, setShowInteractionForm] = useState(false);
+  const [showActivityForm, setShowActivityForm] = useState(false);
 
   // Form states
   const [interactionForm, setInteractionForm] = useState({
@@ -68,7 +85,7 @@ const RequestDetail = () => {
   const handleStatusChange = async (newStatus) => {
     try {
       await requestService.updateStatus(id, newStatus);
-      setRequest(prev => ({ ...prev, user_classification: newStatus }));
+      setRequest(prev => ({ ...prev, status: newStatus }));
     } catch (error) {
       console.error('Error updating status:', error);
       alert('Failed to update status');
@@ -78,11 +95,11 @@ const RequestDetail = () => {
   const handleInteractionSubmit = async (e) => {
     e.preventDefault();
     try {
-      await interactionService.createInteraction({
+      const submissionData = {
         ...interactionForm,
-        outcomes: (interactionForm.outcomes || []).join(', '),
         request_id: parseInt(id)
-      });
+      };
+      await interactionService.createInteraction(submissionData);
       setShowInteractionForm(false);
       setInteractionForm({
         doctor_name: request?.doctor?.name || '',
@@ -132,7 +149,6 @@ const RequestDetail = () => {
   };
 
   const getStatusClass = (status) => {
-    if (!status) return '';
     return status.toLowerCase().replace(' ', '-');
   };
 
@@ -144,8 +160,8 @@ const RequestDetail = () => {
     return <div className="error">Request not found</div>;
   }
 
-  const canLogActivities = user?.role === 'MSL' || user?.role === 'Scientific Officer';
-  const canChangeStatus = user?.role === 'Asst General Manager' || user?.role === 'Associate Vice President';
+  const canLogActivities = user?.role === 'MSL';
+  const canChangeStatus = user?.role === 'MSL Manager' || user?.role === 'HOD';
 
   return (
     <div className="request-detail-container">
@@ -155,17 +171,18 @@ const RequestDetail = () => {
           <h1>Request #{request.id}</h1>
         </div>
         <div className="header-right">
-          <span className={`status-badge-large ${getStatusClass(request.user_classification)}`}>
-            {request.user_classification === 'potential' ? 'Potential User' : 'Not a Potential User'}
+          <span className={`status-badge-large ${getStatusClass(request.status)}`}>
+            {request.status}
           </span>
           {canChangeStatus && (
             <select
-              value={request.user_classification || 'potential'}
+              value={request.status}
               onChange={(e) => handleStatusChange(e.target.value)}
               className="status-select"
             >
-              <option value="potential">Potential User</option>
-              <option value="non-potential">Not a Potential User</option>
+              {STATUSES.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
             </select>
           )}
         </div>
@@ -224,6 +241,12 @@ const RequestDetail = () => {
           >
             Doctor Interactions ({request.doctor_interactions?.length || 0})
           </button>
+          <button
+            className={`tab ${activeTab === 'activities' ? 'active' : ''}`}
+            onClick={() => setActiveTab('activities')}
+          >
+            Office Activities ({request.office_activities?.length || 0})
+          </button>
         </div>
 
         {activeTab === 'summary' && (
@@ -238,6 +261,12 @@ const RequestDetail = () => {
                   >
                     + Log Doctor Visit
                   </button>
+                  <button
+                    onClick={() => setShowActivityForm(true)}
+                    className="action-btn secondary"
+                  >
+                    + Log Office Activity
+                  </button>
                 </div>
               )}
             </div>
@@ -246,7 +275,7 @@ const RequestDetail = () => {
               <div className="empty-timeline">
                 <p>No activities logged yet.</p>
                 {canLogActivities && (
-                  <p>Start by logging a doctor interaction.</p>
+                  <p>Start by logging a doctor interaction or office activity.</p>
                 )}
               </div>
             ) : (
@@ -257,7 +286,7 @@ const RequestDetail = () => {
                     <div className="timeline-content">
                       <div className="timeline-header">
                         <span className="timeline-type">
-                          {'👨‍⚕️ Doctor Visit'}
+                          {log.type === 'doctor_interaction' ? '👨‍⚕️ Doctor Visit' : '🏢 Office Activity'}
                         </span>
                         <span className="timeline-date">{formatDate(log.date)}</span>
                       </div>
@@ -320,8 +349,41 @@ const RequestDetail = () => {
           </div>
         )}
 
-      </div>
+        {activeTab === 'activities' && (
+          <div className="tab-content">
+            <div className="section-header">
+              <h2>Office Activities</h2>
+              {canLogActivities && (
+                <button
+                  onClick={() => setShowActivityForm(true)}
+                  className="action-btn"
+                >
+                  + Log Activity
+                </button>
+              )}
+            </div>
 
+            {request.office_activities?.length === 0 ? (
+              <div className="empty-state">No office activities logged yet.</div>
+            ) : (
+              <div className="activities-list">
+                {request.office_activities?.map(activity => (
+                  <div key={activity.id} className="activity-card">
+                    <div className="activity-header">
+                      <h4>{activity.activity_category}</h4>
+                      <span className="date">{formatDate(activity.activity_date)}</span>
+                    </div>
+                    <p>{activity.summary}</p>
+                    {activity.linked_outputs && (
+                      <p className="outputs"><strong>Outputs:</strong> {activity.linked_outputs}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Doctor Interaction Modal */}
       {showInteractionForm && (
