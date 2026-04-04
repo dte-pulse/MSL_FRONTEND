@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { requestService, seedService } from '../services/api';
+import { requestService } from '../services/api';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
@@ -27,28 +27,7 @@ const Dashboard = () => {
     return roles[role] || role;
   };
 
-  // const getRoleDashboard = () => {
-  //   return (
-  //     <div className="role-section">
-  //       <h2>{getRoleLabel(user?.role)} Dashboard</h2>
-  //       <p>
-  //         {['BL', 'BM'].includes(user?.role) && "Create and manage MSL engagement requests for your doctors."}
-  //         {(user?.role === 'MSL' || user?.role === 'Scientific Officer') && "View assigned requests and log your interactions with doctors."}
-  //         {(user?.role === 'Asst General Manager' || user?.role === 'Associate Vice President') && "Oversee all MSL engagement activities and track outcomes."}
-  //       </p>
-  //       <div className="quick-actions">
-  //         {['BL', 'BM'].includes(user?.role) && (
-  //           <Link to="/requests/new" className="action-btn primary">
-  //             + New Engagement Request
-  //           </Link>
-  //         )}
-  //         <Link to="/requests" className="action-btn secondary">
-  //           {['MSL', 'Scientific Officer'].includes(user?.role) ? "View My Requests" : "View All Requests"}
-  //         </Link>
-  //       </div>
-  //     </div>
-  //   );
-  // };
+
 
   useEffect(() => {
     fetchDashboardData();
@@ -78,15 +57,7 @@ const Dashboard = () => {
     }
   };
 
-  const seedSampleData = async () => {
-    try {
-      await seedService.seedDoctors();
-      alert('Sample doctors added successfully!');
-    } catch (error) {
-      console.error('Error seeding data:', error);
-      alert('Error adding sample data');
-    }
-  };
+
 
 
 
@@ -101,7 +72,7 @@ const Dashboard = () => {
         <p className="role-badge">{getRoleLabel(user?.role)}</p>
       </div>
 
-      {/* {getRoleDashboard()} */}
+
 
       <div className="stats-grid">
         <div className="stat-card">
@@ -123,11 +94,6 @@ const Dashboard = () => {
         {recentRequests.length === 0 ? (
           <div className="empty-state">
             <p>No requests found. Get started by creating a new request.</p>
-            {(user?.role === 'BL' || user?.role === 'BM') && (
-              <button onClick={seedSampleData} className="seed-btn">
-                Add Sample Doctors
-              </button>
-            )}
           </div>
         ) : (
           <div className="recent-list">

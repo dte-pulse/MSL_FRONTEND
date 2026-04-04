@@ -54,9 +54,4 @@ export const activityService = {
   getActivityUsers: () => api.get('/office-activities/users'),
 };
 
-// Seed Service
-export const seedService = {
-  seedDoctors: () => api.post('/seed-doctors'),
-};
-
 export default api;
