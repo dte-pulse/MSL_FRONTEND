@@ -26,7 +26,15 @@ const RequestDetail = () => {
     engagement_quality_interest: '',
     engagement_quality_participation: '',
     engagement_quality_objection: '',
-    summary: ''
+    summary: '',
+    outcomes: ''
+  });
+
+  const [activityForm, setActivityForm] = useState({
+    activity_date: '',
+    activity_category: '',
+    summary: '',
+    linked_outputs: ''
   });
 
   useEffect(() => {
@@ -42,7 +50,7 @@ const RequestDetail = () => {
       ]);
       setRequest(requestRes.data);
       setLogs(logsRes.data);
-      
+
       // Pre-fill doctor name for interaction form
       if (requestRes.data.doctor) {
         setInteractionForm(prev => ({
@@ -72,6 +80,7 @@ const RequestDetail = () => {
     try {
       await interactionService.createInteraction({
         ...interactionForm,
+        outcomes: (interactionForm.outcomes || []).join(', '),
         request_id: parseInt(id)
       });
       setShowInteractionForm(false);
@@ -83,12 +92,34 @@ const RequestDetail = () => {
         engagement_quality_interest: '',
         engagement_quality_participation: '',
         engagement_quality_objection: '',
-        summary: ''
+        summary: '',
+        outcomes: ''
       });
       fetchRequestData();
     } catch (error) {
       console.error('Error creating interaction:', error);
       alert('Failed to log interaction');
+    }
+  };
+
+  const handleActivitySubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await activityService.createActivity({
+        ...activityForm,
+        request_id: parseInt(id)
+      });
+      setShowActivityForm(false);
+      setActivityForm({
+        activity_date: '',
+        activity_category: '',
+        summary: '',
+        linked_outputs: ''
+      });
+      fetchRequestData();
+    } catch (error) {
+      console.error('Error creating activity:', error);
+      alert('Failed to log activity');
     }
   };
 
@@ -276,6 +307,11 @@ const RequestDetail = () => {
                         </div>
                       </div>
                       <p className="summary"><strong>Summary:</strong> {interaction.summary}</p>
+                      {interaction.outcomes && (
+                        <p className="outcomes" style={{ marginTop: '5px' }}>
+                          <strong>Outcome:</strong> {interaction.outcomes}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -298,7 +334,7 @@ const RequestDetail = () => {
                 <input
                   type="text"
                   value={interactionForm.doctor_name}
-                  onChange={e => setInteractionForm({...interactionForm, doctor_name: e.target.value})}
+                  onChange={e => setInteractionForm({ ...interactionForm, doctor_name: e.target.value })}
                   className="form-control"
                   required
                 />
@@ -308,7 +344,7 @@ const RequestDetail = () => {
                 <input
                   type="date"
                   value={interactionForm.visit_date}
-                  onChange={e => setInteractionForm({...interactionForm, visit_date: e.target.value})}
+                  onChange={e => setInteractionForm({ ...interactionForm, visit_date: e.target.value })}
                   className="form-control"
                   required
                 />
@@ -317,7 +353,7 @@ const RequestDetail = () => {
                 <label>Topics Discussed</label>
                 <textarea
                   value={interactionForm.topics_discussed}
-                  onChange={e => setInteractionForm({...interactionForm, topics_discussed: e.target.value})}
+                  onChange={e => setInteractionForm({ ...interactionForm, topics_discussed: e.target.value })}
                   className="form-control"
                   rows="2"
                 />
@@ -326,7 +362,7 @@ const RequestDetail = () => {
                 <label>Scientific Depth</label>
                 <select
                   value={interactionForm.scientific_depth}
-                  onChange={e => setInteractionForm({...interactionForm, scientific_depth: e.target.value})}
+                  onChange={e => setInteractionForm({ ...interactionForm, scientific_depth: e.target.value })}
                   className="form-control"
                 >
                   <option value="">Select</option>
@@ -340,7 +376,7 @@ const RequestDetail = () => {
                   <label>Interest in Clinical Data</label>
                   <select
                     value={interactionForm.engagement_quality_interest}
-                    onChange={e => setInteractionForm({...interactionForm, engagement_quality_interest: e.target.value})}
+                    onChange={e => setInteractionForm({ ...interactionForm, engagement_quality_interest: e.target.value })}
                     className="form-control"
                   >
                     <option value="">Select</option>
@@ -353,7 +389,7 @@ const RequestDetail = () => {
                   <label>Participation Level</label>
                   <select
                     value={interactionForm.engagement_quality_participation}
-                    onChange={e => setInteractionForm({...interactionForm, engagement_quality_participation: e.target.value})}
+                    onChange={e => setInteractionForm({ ...interactionForm, engagement_quality_participation: e.target.value })}
                     className="form-control"
                   >
                     <option value="">Select</option>
@@ -366,7 +402,7 @@ const RequestDetail = () => {
                   <label>Objection Complexity</label>
                   <select
                     value={interactionForm.engagement_quality_objection}
-                    onChange={e => setInteractionForm({...interactionForm, engagement_quality_objection: e.target.value})}
+                    onChange={e => setInteractionForm({ ...interactionForm, engagement_quality_objection: e.target.value })}
                     className="form-control"
                   >
                     <option value="">Select</option>
@@ -377,10 +413,23 @@ const RequestDetail = () => {
                 </div>
               </div>
               <div className="form-group">
+                <label>Outcome</label>
+                <select
+                  value={interactionForm.outcomes}
+                  onChange={e => setInteractionForm({ ...interactionForm, outcomes: e.target.value })}
+                  className="form-control"
+                >
+                  <option value="">Select Outcome</option>
+                  {OUTCOME_OPTIONS.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
                 <label>Summary of Discussion</label>
                 <textarea
                   value={interactionForm.summary}
-                  onChange={e => setInteractionForm({...interactionForm, summary: e.target.value})}
+                  onChange={e => setInteractionForm({ ...interactionForm, summary: e.target.value })}
                   className="form-control"
                   rows="3"
                 />
@@ -396,6 +445,65 @@ const RequestDetail = () => {
         </div>
       )}
 
+      {/* Office Activity Modal */}
+      {showActivityForm && (
+        <div className="modal-overlay" onClick={() => setShowActivityForm(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2>Log Office Activity</h2>
+            <form onSubmit={handleActivitySubmit}>
+              <div className="form-group">
+                <label>Date</label>
+                <input
+                  type="date"
+                  value={activityForm.activity_date}
+                  onChange={e => setActivityForm({ ...activityForm, activity_date: e.target.value })}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Activity Category</label>
+                <select
+                  value={activityForm.activity_category}
+                  onChange={e => setActivityForm({ ...activityForm, activity_category: e.target.value })}
+                  className="form-control"
+                  required
+                >
+                  <option value="">Select Category</option>
+                  {ACTIVITY_CATEGORIES.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Summary of Work Done</label>
+                <textarea
+                  value={activityForm.summary}
+                  onChange={e => setActivityForm({ ...activityForm, summary: e.target.value })}
+                  className="form-control"
+                  rows="3"
+                />
+              </div>
+              <div className="form-group">
+                <label>Linked Outputs (if any)</label>
+                <textarea
+                  value={activityForm.linked_outputs}
+                  onChange={e => setActivityForm({ ...activityForm, linked_outputs: e.target.value })}
+                  className="form-control"
+                  rows="2"
+                  placeholder="e.g., Presentation slides, Report, Training materials"
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowActivityForm(false)} className="btn-secondary">
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary">Save Activity</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
