@@ -8,6 +8,7 @@ import RequestList from './pages/RequestList';
 import RequestForm from './pages/RequestForm';
 import RequestDetail from './pages/RequestDetail';
 import DoctorManagement from './pages/DoctorManagement';
+import OfficeActivities from './pages/OfficeActivities';
 import './App.css';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
             <Route path="requests/new" element={<RequestForm />} />
             <Route path="requests/:id" element={<RequestDetail />} />
             <Route path="doctors" element={<DoctorManagement />} />
+            <Route path="office-activities" element={<OfficeActivities />} />
           </Route>
 
           {/* Catch all */}

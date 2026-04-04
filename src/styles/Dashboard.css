@@ -190,22 +190,12 @@
   font-weight: 500;
 }
 
-.status-badge.pending {
-  background: #fef3c7;
-  color: #92400e;
+.status-badge.potential {
+  background: #eef2ff;
+  color: #4f46e5;
 }
 
-.status-badge.in-progress {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.status-badge.completed {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge.rejected {
+.status-badge.non-potential {
   background: #fee2e2;
   color: #991b1b;
 }

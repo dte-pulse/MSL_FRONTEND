@@ -11,7 +11,7 @@ const api = axios.create({
 
 // Auth Service
 export const authService = {
-  login: (username, role) => api.post('/login', { username, role }),
+  login: (employeeId, password) => api.post('/login', { employee_id: employeeId, password }),
 };
 
 // Doctor Service
@@ -29,12 +29,12 @@ export const requestService = {
     const queryParams = new URLSearchParams();
     if (params.requested_by) queryParams.append('requested_by', params.requested_by);
     if (params.role) queryParams.append('role', params.role);
-    if (params.status) queryParams.append('status', params.status);
+    if (params.user_classification) queryParams.append('user_classification', params.user_classification);
     return api.get(`/requests?${queryParams.toString()}`);
   },
   getRequest: (id) => api.get(`/requests/${id}`),
   createRequest: (data) => api.post('/requests', data),
-  updateStatus: (id, status) => api.put(`/requests/${id}/status?status=${status}`),
+  updateStatus: (id, status) => api.put(`/requests/${id}/user-classification?user_classification=${status}`),
   getLogs: (id) => api.get(`/requests/${id}/logs`),
 };
 
@@ -47,7 +47,11 @@ export const interactionService = {
 // Office Activity Service
 export const activityService = {
   createActivity: (data) => api.post('/office-activities', data),
-  getActivities: (requestId) => api.get(`/requests/${requestId}/activities`),
+  getActivities: (mslUsername = null) => {
+    const url = mslUsername ? `/office-activities?msl_username=${encodeURIComponent(mslUsername)}` : '/office-activities';
+    return api.get(url);
+  },
+  getActivityUsers: () => api.get('/office-activities/users'),
 };
 
 // Seed Service

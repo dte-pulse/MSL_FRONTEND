@@ -5,7 +5,6 @@ import { doctorService, requestService } from '../services/api';
 import '../styles/RequestForm.css';
 
 const PRIORITIES = ['High', 'Medium', 'Low'];
-const STATUSES = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected', 'On Hold'];
 
 const TERRITORY_REGIONS_MAP = {
   'North': ['Delhi', 'Punjab', 'Haryana', 'UP', 'Uttarakhand', 'Himachal Pradesh', 'J&K'],
@@ -108,7 +107,7 @@ const RequestForm = () => {
         doctor_id: parseInt(formData.doctor_id),
         requested_by: user.username,
         requested_by_role: user.role,
-        status: 'Pending'
+        user_classification: 'potential'
       };
 
       await requestService.createRequest(requestData);

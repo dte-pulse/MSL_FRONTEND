@@ -1,69 +1,96 @@
+/* ── Container ── */
 .doctor-management-container {
-  max-width: 1400px;
+  max-width: 1500px;
   margin: 0 auto;
 }
 
+/* ── Header ── */
 .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 25px;
 }
 
 .page-header h1 {
-  color: #333;
+  color: #1a1a2e;
   font-size: 28px;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
+}
+
+.page-subtitle {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
 }
 
 .back-link {
   color: #667eea;
   text-decoration: none;
   font-weight: 500;
+  white-space: nowrap;
+  margin-top: 6px;
 }
 
 .back-link:hover {
   text-decoration: underline;
 }
 
+/* ── Search ── */
 .search-bar {
   margin-bottom: 25px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .search-input {
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   padding: 12px 20px;
   border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 15px;
-  transition: border-color 0.3s;
+  transition: border-color 0.25s;
+  background: white;
 }
 
 .search-input:focus {
   outline: none;
   border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+.search-results-count {
+  font-size: 13px;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+/* ── Section card ── */
 .doctors-section {
   background: white;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 25px;
   margin-bottom: 25px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .doctors-section h2 {
-  color: #333;
-  font-size: 20px;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
+  color: #1a1a2e;
+  font-size: 18px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
   border-bottom: 2px solid #f0f0f0;
 }
 
 .empty-text {
-  color: #666;
+  color: #9ca3af;
   text-align: center;
   padding: 30px;
 }
 
+/* ── Table ── */
 .doctors-table-container {
   overflow-x: auto;
 }
@@ -71,93 +98,162 @@
 .doctors-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 13.5px;
 }
 
 .doctors-table th {
-  background: #f8f9fa;
-  padding: 14px 16px;
+  background: #f8f9fc;
+  padding: 12px 14px;
   text-align: left;
   font-weight: 600;
-  color: #333;
-  font-size: 14px;
-  border-bottom: 2px solid #e0e0e0;
+  color: #374151;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
 }
 
 .doctors-table td {
-  padding: 14px 16px;
-  border-bottom: 1px solid #e0e0e0;
-  color: #666;
-  font-size: 14px;
+  padding: 13px 14px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #4b5563;
+  vertical-align: middle;
 }
 
-.doctors-table tr:hover {
-  background: #f8f9fa;
+.col-expand {
+  width: 36px;
+  padding: 0 !important;
 }
 
-.doctors-table tr.priority-row {
+.col-id {
+  width: 50px;
+  color: #9ca3af !important;
+  font-size: 12px !important;
+}
+
+/* ── Row states ── */
+.doctor-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.doctor-row:hover {
+  background: #f5f7ff;
+}
+
+.doctor-row.priority-row {
   background: #fffbeb;
 }
 
-.doctors-table tr.priority-row:hover {
+.doctor-row.priority-row:hover {
   background: #fef3c7;
 }
 
-.doctor-name {
-  font-weight: 600;
-  color: #333;
+.doctor-row.expanded {
+  background: #eef2ff !important;
 }
 
+/* ── Expand icon ── */
+.expand-cell {
+  text-align: center;
+  padding: 0 6px !important;
+}
+
+.expand-icon {
+  display: inline-block;
+  font-size: 10px;
+  color: #9ca3af;
+  transition: transform 0.2s ease;
+}
+
+.expand-icon.open {
+  transform: rotate(90deg);
+  color: #667eea;
+}
+
+/* ── Column cell content ── */
+.doctor-name {
+  font-weight: 600;
+  color: #1a1a2e !important;
+}
+
+.null-val {
+  color: #d1d5db;
+}
+
+.mr-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mr-name {
+  font-weight: 500;
+  color: #374151;
+}
+
+.emp-code {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* ── Badges ── */
 .priority-badge {
   background: #fef3c7;
   color: #92400e;
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .regular-badge {
   background: #f3f4f6;
   color: #4b5563;
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
 }
 
+/* ── Action buttons ── */
 .action-buttons {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
 }
 
 .btn-select {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.25s;
+  white-space: nowrap;
 }
 
 .btn-select:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
 }
 
 .btn-duplicate {
   background: #dbeafe;
   color: #1e40af;
   border: none;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: background 0.2s;
+  white-space: nowrap;
 }
 
 .btn-duplicate:hover {
@@ -168,53 +264,146 @@
   background: #fee2e2;
   color: #dc2626;
   border: none;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: background 0.2s;
+  white-space: nowrap;
 }
 
 .btn-delete:hover {
   background: #fecaca;
 }
 
+/* ── Expandable detail panel ── */
+.detail-row td {
+  padding: 0 !important;
+  border-bottom: 2px solid #e0e7ff !important;
+  background: #f5f7ff !important;
+}
+
+.detail-panel {
+  padding: 20px 28px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.detail-group {
+  background: white;
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.detail-group h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.detail-label {
+  color: #9ca3af;
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: #1a1a2e;
+  font-weight: 500;
+  text-align: right;
+  word-break: break-word;
+}
+
+/* ── Info section ── */
 .info-section {
   background: #f0f9ff;
   border-radius: 12px;
-  padding: 20px 25px;
+  padding: 18px 24px;
   border-left: 4px solid #0ea5e9;
 }
 
 .info-section h3 {
   color: #0369a1;
-  font-size: 16px;
-  margin-bottom: 12px;
+  font-size: 15px;
+  margin-bottom: 10px;
 }
 
 .info-section ul {
   margin: 0;
   padding-left: 20px;
-  color: #666;
+  color: #555;
 }
 
 .info-section li {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  font-size: 14px;
 }
 
 .info-section strong {
-  color: #333;
+  color: #1e40af;
 }
 
-.loading {
-  text-align: center;
-  padding: 60px;
-  color: #666;
-  font-size: 18px;
+/* ── Loading ── */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px;
+  gap: 16px;
+  color: #6b7280;
 }
 
-@media (max-width: 768px) {
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .page-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
   .doctors-section {
     padding: 15px;
   }
@@ -225,12 +414,12 @@
 
   .doctors-table th,
   .doctors-table td {
-    padding: 10px;
+    padding: 10px 10px;
   }
 
   .action-buttons {
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
   }
 
   .btn-select,
@@ -238,5 +427,9 @@
   .btn-delete {
     width: 100%;
     text-align: center;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
   }
 }

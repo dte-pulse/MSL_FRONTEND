@@ -8,12 +8,47 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     totalRequests: 0,
-    pendingRequests: 0,
-    inProgressRequests: 0,
-    completedRequests: 0,
+    potentialRequests: 0,
+    nonPotentialRequests: 0,
   });
   const [recentRequests, setRecentRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const getRoleLabel = (role) => {
+    const roles = {
+      'BL': 'Business Leader',
+      'BM': 'Business Manager',
+      'MSL': 'Medical Science Liaison',
+      'Scientific Officer': 'Medical Science Liaison',
+      'SBUH/BH': 'SBUH/BH',
+      'Asst General Manager': 'Asst General Manager',
+      'Associate Vice President': 'Associate Vice President'
+    };
+    return roles[role] || role;
+  };
+
+  const getRoleDashboard = () => {
+    return (
+      <div className="role-section">
+        <h2>{getRoleLabel(user?.role)} Dashboard</h2>
+        <p>
+          {['BL', 'BM'].includes(user?.role) && "Create and manage MSL engagement requests for your doctors."}
+          {(user?.role === 'MSL' || user?.role === 'Scientific Officer') && "View assigned requests and log your interactions with doctors."}
+          {(user?.role === 'Asst General Manager' || user?.role === 'Associate Vice President') && "Oversee all MSL engagement activities and track outcomes."}
+        </p>
+        <div className="quick-actions">
+          {['BL', 'BM'].includes(user?.role) && (
+            <Link to="/requests/new" className="action-btn primary">
+              + New Engagement Request
+            </Link>
+          )}
+          <Link to="/requests" className="action-btn secondary">
+            {['MSL', 'Scientific Officer'].includes(user?.role) ? "View My Requests" : "View All Requests"}
+          </Link>
+        </div>
+      </div>
+    );
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -31,9 +66,8 @@ const Dashboard = () => {
 
       setStats({
         totalRequests: requests.length,
-        pendingRequests: requests.filter(r => r.status === 'Pending').length,
-        inProgressRequests: requests.filter(r => r.status === 'In Progress').length,
-        completedRequests: requests.filter(r => r.status === 'Completed').length,
+        potentialRequests: requests.filter(r => r.user_classification === 'potential').length,
+        nonPotentialRequests: requests.filter(r => r.user_classification === 'non-potential').length,
       });
 
       setRecentRequests(requests.slice(0, 5));
@@ -54,53 +88,7 @@ const Dashboard = () => {
     }
   };
 
-  const getRoleDashboard = () => {
-    switch (user?.role) {
-      case 'BL':
-      case 'BM':
-      // return (
-      //   <div className="role-section">
-      //     <h2>Business Dashboard</h2>
-      //     <p>Create and manage MSL engagement requests for your doctors.</p>
-      //     <div className="quick-actions">
-      //       <Link to="/requests/new" className="action-btn primary">
-      //         + New Engagement Request
-      //       </Link>
-      //       <Link to="/requests" className="action-btn secondary">
-      //         View All Requests
-      //       </Link>
-      //     </div>
-      //   </div>
-      // );
-      case 'MSL':
-      // return (
-      //   <div className="role-section">
-      //     <h2>MSL Dashboard</h2>
-      //     <p>View assigned requests and log your interactions with doctors.</p>
-      //     <div className="quick-actions">
-      //       <Link to="/requests" className="action-btn primary">
-      //         View My Requests
-      //       </Link>
-      //     </div>
-      //   </div>
-      // );
-      // case 'MSL Manager':
-      // case 'HOD':
-      //   return (
-      //     <div className="role-section">
-      //       <h2>Management Dashboard</h2>
-      //       <p>Oversee all MSL engagement activities and track outcomes.</p>
-      //       <div className="quick-actions">
-      //         <Link to="/requests" className="action-btn primary">
-      //           View All Requests
-      //         </Link>
-      //       </div>
-      //     </div>
-      //   );
-      default:
-        return null;
-    }
-  };
+
 
   if (loading) {
     return <div className="loading">Loading dashboard...</div>;
@@ -110,7 +98,7 @@ const Dashboard = () => {
     <div className="dashboard">
       <div className="dashboard-header">
         <h1>Welcome, {user?.username}</h1>
-        <p className="role-badge">{user?.role}</p>
+        <p className="role-badge">{getRoleLabel(user?.role)}</p>
       </div>
 
       {getRoleDashboard()}
@@ -121,16 +109,12 @@ const Dashboard = () => {
           <p>Total Requests</p>
         </div>
         <div className="stat-card pending">
-          <h3>{stats.pendingRequests}</h3>
-          <p>Pending</p>
-        </div>
-        <div className="stat-card in-progress">
-          <h3>{stats.inProgressRequests}</h3>
-          <p>In Progress</p>
+          <h3>{stats.potentialRequests}</h3>
+          <p>Potential Users</p>
         </div>
         <div className="stat-card completed">
-          <h3>{stats.completedRequests}</h3>
-          <p>Completed</p>
+          <h3>{stats.nonPotentialRequests}</h3>
+          <p>Not a Potential User</p>
         </div>
       </div>
 
@@ -158,8 +142,8 @@ const Dashboard = () => {
                   <p>{request.therapy_area} • {request.objective?.substring(0, 50)}...</p>
                 </div>
                 <div className="recent-meta">
-                  <span className={`status-badge ${request.status.toLowerCase().replace(' ', '-')}`}>
-                    {request.status}
+                  <span className={`status-badge ${request.user_classification === 'potential' ? 'potential' : 'non-potential'}`}>
+                    {request.user_classification === 'potential' ? 'Potential User' : 'Not a Potential User'}
                   </span>
                   <span className="priority-badge">{request.priority}</span>
                 </div>

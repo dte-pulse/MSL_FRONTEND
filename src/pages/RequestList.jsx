@@ -4,26 +4,26 @@ import { useAuth } from '../context/AuthContext';
 import { requestService } from '../services/api';
 import '../styles/RequestList.css';
 
-const STATUSES = ['All', 'Pending', 'Approved', 'In Progress', 'Completed', 'Rejected', 'On Hold'];
+const CLASSIFICATIONS = ['All', 'potential', 'non-potential'];
 
 const RequestList = () => {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState('All');
+  const [filterClassification, setFilterClassification] = useState('All');
 
   useEffect(() => {
     fetchRequests();
   }, [user]);
 
   useEffect(() => {
-    if (filterStatus === 'All') {
+    if (filterClassification === 'All') {
       setFilteredRequests(requests);
     } else {
-      setFilteredRequests(requests.filter(r => r.status === filterStatus));
+      setFilteredRequests(requests.filter(r => r.user_classification === filterClassification));
     }
-  }, [filterStatus, requests]);
+  }, [filterClassification, requests]);
 
   const fetchRequests = async () => {
     try {
@@ -42,8 +42,9 @@ const RequestList = () => {
     }
   };
 
-  const getStatusClass = (status) => {
-    return status.toLowerCase().replace(' ', '-');
+  const getClassificationClass = (classification) => {
+    if (!classification) return '';
+    return classification.toLowerCase().replace(' ', '-');
   };
 
   const formatDate = (dateString) => {
@@ -70,15 +71,15 @@ const RequestList = () => {
       </div>
 
       <div className="filter-bar">
-        <label>Filter by Status:</label>
+        <label>Filter by Classification:</label>
         <div className="filter-buttons">
-          {STATUSES.map(status => (
+          {CLASSIFICATIONS.map(classification => (
             <button
-              key={status}
-              className={`filter-btn ${filterStatus === status ? 'active' : ''}`}
-              onClick={() => setFilterStatus(status)}
+              key={classification}
+              className={`filter-btn ${filterClassification === classification ? 'active' : ''}`}
+              onClick={() => setFilterClassification(classification)}
             >
-              {status}
+              {classification === 'All' ? 'All' : classification === 'potential' ? 'Potential User' : 'Not a Potential User'}
             </button>
           ))}
         </div>
@@ -103,7 +104,7 @@ const RequestList = () => {
                 <th>Therapy Area</th>
                 <th>Objective</th>
                 <th>Priority</th>
-                <th>Status</th>
+                <th>Classification</th>
                 <th>Requested By</th>
                 <th>Created</th>
                 <th>Actions</th>
@@ -125,8 +126,8 @@ const RequestList = () => {
                     </span>
                   </td>
                   <td>
-                    <span className={`status-badge ${getStatusClass(request.status)}`}>
-                      {request.status}
+                    <span className={`status-badge ${getClassificationClass(request.user_classification)}`}>
+                      {request.user_classification === 'potential' ? 'Potential User' : 'Not a Potential User'}
                     </span>
                   </td>
                   <td>{request.requested_by}</td>

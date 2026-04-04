@@ -16,9 +16,10 @@ const Navbar = () => {
       'BL': 'Business Leader',
       'BM': 'Business Manager',
       'MSL': 'Medical Science Liaison',
+      'Scientific Officer': 'Medical Science Liaison',
       'SBUH/BH': 'SBUH/BH',
-      'MSL Manager': 'MSL Manager',
-      'HOD': 'Head of Department'
+      'Asst General Manager': 'Asst General Manager',
+      'Associate Vice President': 'Associate Vice President'
     };
     return roles[role] || role;
   };
@@ -37,6 +38,9 @@ const Navbar = () => {
         <Link to="/requests" className="nav-link">Requests</Link>
         {(user?.role === 'BL' || user?.role === 'BM') && (
           <Link to="/doctors" className="nav-link">Doctors</Link>
+        )}
+        {['MSL', 'Scientific Officer', 'Asst General Manager', 'Associate Vice President'].includes(user?.role) && (
+          <Link to="/office-activities" className="nav-link">Activities</Link>
         )}
       </div>
 

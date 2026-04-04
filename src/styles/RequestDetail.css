@@ -48,34 +48,14 @@
   font-size: 14px;
 }
 
-.status-badge-large.pending {
-  background: #fef3c7;
-  color: #92400e;
+.status-badge-large.potential {
+  background: #eef2ff;
+  color: #4f46e5;
 }
 
-.status-badge-large.approved {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.status-badge-large.in-progress {
-  background: #e0e7ff;
-  color: #3730a3;
-}
-
-.status-badge-large.completed {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge-large.rejected {
+.status-badge-large.non-potential {
   background: #fee2e2;
   color: #991b1b;
-}
-
-.status-badge-large.on-hold {
-  background: #f3f4f6;
-  color: #4b5563;
 }
 
 .status-select {

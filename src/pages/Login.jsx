@@ -4,29 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/api';
 import '../styles/Login.css';
 
-const ROLES = [
-  { value: 'BL', label: 'Business Leader (BL)' },
-  { value: 'BM', label: 'Business Manager (BM)' },
-  { value: 'MSL', label: 'Medical Science Liaison (MSL)' },
-  { value: 'SBUH/BH', label: 'SBUH/BH' },
-  { value: 'MSL Manager', label: 'MSL Manager' },
-  { value: 'HOD', label: 'Head of Department (HOD)' },
-];
-
-const SAMPLE_USERS = [
-  'Pavan Kumar',
-  'Rahul Sharma',
-  'Priya Patel',
-  'Amit Singh',
-  'Neha Gupta',
-  'Vikram Reddy',
-  'Ananya Desai',
-  'Suresh Nair',
-];
-
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [role, setRole] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -37,15 +17,19 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-    if (!username || !role) {
-      setError('Please select both username and role');
+    if (!employeeId || !password) {
+      setError('Please enter both Employee ID and Password');
       setLoading(false);
       return;
     }
 
     try {
-      const response = await authService.login(username, role);
-      login({ username: response.data.username, role: response.data.role });
+      const response = await authService.login(employeeId, password);
+      login({ 
+        username: response.data.username, 
+        role: response.data.role,
+        employee_id: response.data.employee_id 
+      });
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.detail || 'Login failed. Please try again.');
@@ -66,37 +50,27 @@ const Login = () => {
           {error && <div className="error-message">{error}</div>}
 
           <div className="form-group">
-            <label htmlFor="username">Select User</label>
-            <select
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+            <label htmlFor="employeeId">Employee ID</label>
+            <input
+              type="text"
+              id="employeeId"
+              value={employeeId}
+              onChange={(e) => setEmployeeId(e.target.value)}
               className="form-control"
-            >
-              <option value="">-- Select User --</option>
-              {SAMPLE_USERS.map((user) => (
-                <option key={user} value={user}>
-                  {user}
-                </option>
-              ))}
-            </select>
+              placeholder="Enter Employee ID (e.g., E10472)"
+            />
           </div>
 
           <div className="form-group">
-            <label htmlFor="role">Select Role</label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
+            <label htmlFor="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="form-control"
-            >
-              <option value="">-- Select Role --</option>
-              {ROLES.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
+              placeholder="Enter Password"
+            />
           </div>
 
           <button type="submit" className="login-btn" disabled={loading}>
@@ -105,7 +79,7 @@ const Login = () => {
         </form>
 
         <div className="login-footer">
-          <p>Mock Login System - SSO Integration Planned</p>
+          <p>Default Password: Pulse@123</p>
         </div>
       </div>
     </div>
