@@ -6,22 +6,21 @@ import '../styles/RequestForm.css';
 
 const PRIORITIES = ['High', 'Medium', 'Low'];
 
-const TERRITORY_REGIONS_MAP = {
-  'North': ['Delhi', 'Punjab', 'Haryana', 'UP', 'Uttarakhand', 'Himachal Pradesh', 'J&K'],
-  'South': ['Tamil Nadu', 'Kerala', 'Karnataka', 'Andhra Pradesh', 'Telangana'],
-  'East': ['West Bengal', 'Bihar', 'Odisha', 'Jharkhand', 'Assam'],
-  'West': ['Maharashtra', 'Gujarat', 'Rajasthan', 'Madhya Pradesh', 'Goa']
-};
-
 const RequestForm = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const selectedDoctorId = location.state?.selectedDoctorId;
 
-  const [doctors, setDoctors] = useState([]);
+  const [allDoctors, setAllDoctors] = useState([]);
+  const [filteredDoctors, setFilteredDoctors] = useState([]);
+
+  const [territories, setTerritories] = useState([]);
+  const [regions, setRegions] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
   const [formData, setFormData] = useState({
     territory: '',
     region: '',
@@ -33,43 +32,61 @@ const RequestForm = () => {
     notes: '',
   });
 
+  // ================= FETCH DOCTORS =================
   useEffect(() => {
     fetchDoctors();
   }, []);
 
-  // Handle pre-selected doctor from Doctor Management page
-  useEffect(() => {
-    if (selectedDoctorId && doctors.length > 0) {
-      const selectedDoctor = doctors.find(d => d.id === parseInt(selectedDoctorId));
-      if (selectedDoctor) {
-        setFormData(prev => ({
-          ...prev,
-          doctor_id: selectedDoctorId,
-          therapy_area: selectedDoctor.therapy_area || ''
-        }));
-      }
-    }
-  }, [doctors, selectedDoctorId]);
-
   const fetchDoctors = async () => {
     try {
-      const response = await doctorService.getDoctors();
-      setDoctors(response.data);
-    } catch (error) {
-      console.error('Error fetching doctors:', error);
-      setError('Failed to load doctors list');
+      const res = await doctorService.getDoctors();
+      setAllDoctors(res.data);
+
+      // ✅ Extract unique territories from DB
+      const uniqueTerritories = [...new Set(res.data.map(d => d.territory).filter(Boolean))];
+      setTerritories(uniqueTerritories);
+
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load doctors');
     }
   };
 
+  // ================= HANDLE TERRITORY CHANGE =================
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name === 'territory') {
+      const filtered = allDoctors.filter(d => d.territory === value);
+
+      const uniqueRegions = [...new Set(filtered.map(d => d.region).filter(Boolean))];
+
+      setRegions(uniqueRegions);
+      setFilteredDoctors([]);
+
       setFormData(prev => ({
         ...prev,
-        [name]: value,
-        region: ''
+        territory: value,
+        region: '',
+        doctor_id: '',
+        therapy_area: ''
       }));
+
+    } else if (name === 'region') {
+
+      const filtered = allDoctors.filter(
+        d => d.territory === formData.territory && d.region === value
+      );
+
+      setFilteredDoctors(filtered);
+
+      setFormData(prev => ({
+        ...prev,
+        region: value,
+        doctor_id: '',
+        therapy_area: ''
+      }));
+
     } else {
       setFormData(prev => ({
         ...prev,
@@ -78,9 +95,10 @@ const RequestForm = () => {
     }
   };
 
+  // ================= HANDLE DOCTOR =================
   const handleDoctorChange = (e) => {
     const doctorId = e.target.value;
-    const selectedDoctor = doctors.find(d => d.id === parseInt(doctorId));
+    const selectedDoctor = filteredDoctors.find(d => d.id === parseInt(doctorId));
 
     setFormData(prev => ({
       ...prev,
@@ -89,10 +107,36 @@ const RequestForm = () => {
     }));
   };
 
+  // ================= PRESELECT DOCTOR =================
+  useEffect(() => {
+    if (selectedDoctorId && allDoctors.length > 0) {
+      const selectedDoctor = allDoctors.find(d => d.id === parseInt(selectedDoctorId));
+
+      if (selectedDoctor) {
+        const territoryDoctors = allDoctors.filter(d => d.territory === selectedDoctor.territory);
+        const regionDoctors = territoryDoctors.filter(d => d.region === selectedDoctor.region);
+
+        const uniqueRegions = [...new Set(territoryDoctors.map(d => d.region).filter(Boolean))];
+
+        setRegions(uniqueRegions);
+        setFilteredDoctors(regionDoctors);
+
+        setFormData(prev => ({
+          ...prev,
+          territory: selectedDoctor.territory,
+          region: selectedDoctor.region,
+          doctor_id: selectedDoctorId,
+          therapy_area: selectedDoctor.therapy_area || ''
+        }));
+      }
+    }
+  }, [selectedDoctorId, allDoctors]);
+
+  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
+    setError('');
 
     if (!formData.doctor_id) {
       setError('Please select a doctor');
@@ -101,17 +145,18 @@ const RequestForm = () => {
     }
 
     try {
-      const { territory, region, ...formDataWithoutLocation } = formData;
-      const requestData = {
-        ...formDataWithoutLocation,
+      const { territory, region, ...payload } = formData;
+
+      await requestService.createRequest({
+        ...payload,
         doctor_id: parseInt(formData.doctor_id),
         requested_by: user.username,
         requested_by_role: user.role,
         user_classification: 'potential'
-      };
+      });
 
-      await requestService.createRequest(requestData);
       navigate('/requests');
+
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to create request');
     } finally {
@@ -119,185 +164,125 @@ const RequestForm = () => {
     }
   };
 
-  // Separate priority and regular doctors
-  const priorityDoctors = doctors.filter(d => d.is_priority_doctor);
-  const regularDoctors = doctors.filter(d => !d.is_priority_doctor);
-
-  // Get selected doctor name for display
-  const selectedDoctor = doctors.find(d => d.id === parseInt(formData.doctor_id));
-
+  // ================= UI =================
   return (
     <div className="request-form-container">
       <div className="form-header">
         <h1>MSL Engagement Request</h1>
-        <p>Create a new engagement request for MSL to interact with a doctor</p>
-        {selectedDoctorId && selectedDoctor && (
-          <div className="preselected-info">
-            <p>✓ Pre-selected doctor: <strong>{selectedDoctor.name}</strong></p>
-          </div>
-        )}
+        <p>Create request for doctor interaction</p>
       </div>
 
       <form onSubmit={handleSubmit} className="request-form">
+
         {error && <div className="error-message">{error}</div>}
 
+        {/* ================= LOCATION ================= */}
         <div className="form-section">
           <h3>Doctor Information</h3>
 
           <div className="form-row">
+
+            {/* Territory */}
             <div className="form-group">
-              <label htmlFor="territory">Territory *</label>
-              <select
-                id="territory"
-                name="territory"
-                value={formData.territory}
-                onChange={handleChange}
-                className="form-control"
-                required
-              >
+              <label>Territory *</label>
+              <select name="territory" value={formData.territory} onChange={handleChange} required>
                 <option value="">-- Select Territory --</option>
-                {Object.keys(TERRITORY_REGIONS_MAP).map(t => (
+                {territories.map(t => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
             </div>
 
+            {/* Region */}
             <div className="form-group">
-              <label htmlFor="region">Region *</label>
+              <label>Region *</label>
               <select
-                id="region"
                 name="region"
                 value={formData.region}
                 onChange={handleChange}
-                className="form-control"
-                required
                 disabled={!formData.territory}
+                required
               >
                 <option value="">-- Select Region --</option>
-                {formData.territory && TERRITORY_REGIONS_MAP[formData.territory].map(r => (
+                {regions.map(r => (
                   <option key={r} value={r}>{r}</option>
                 ))}
               </select>
             </div>
+
           </div>
 
+          {/* Doctor */}
           <div className="form-group">
-            <label htmlFor="doctor_id">Doctor Name *</label>
+            <label>Doctor *</label>
             <select
-              id="doctor_id"
               name="doctor_id"
               value={formData.doctor_id}
               onChange={handleDoctorChange}
-              className="form-control"
+              disabled={!formData.region}
               required
             >
               <option value="">-- Select Doctor --</option>
 
-              {priorityDoctors.length > 0 && (
-                <optgroup label="⭐ Priority Doctors">
-                  {priorityDoctors.map(doctor => (
-                    <option key={doctor.id} value={doctor.id}>
-                      {doctor.name} ({doctor.therapy_area})
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-
-              {regularDoctors.length > 0 && (
-                <optgroup label="Other Doctors">
-                  {regularDoctors.map(doctor => (
-                    <option key={doctor.id} value={doctor.id}>
-                      {doctor.name} ({doctor.therapy_area})
-                    </option>
-                  ))}
-                </optgroup>
-              )}
+              {filteredDoctors.map(d => (
+                <option key={d.id} value={d.id}>
+                  {d.name} ({d.therapy_area})
+                </option>
+              ))}
             </select>
           </div>
 
+          {/* Therapy */}
           <div className="form-group">
-            <label htmlFor="therapy_area">Therapy Area / Brand</label>
-            <input
-              type="text"
-              id="therapy_area"
-              name="therapy_area"
-              value={formData.therapy_area}
-              className="form-control"
-              placeholder="e.g., Cardiology, Oncology (Auto-filled)"
-              readOnly
-            />
+            <label>Therapy Area</label>
+            <input value={formData.therapy_area} readOnly />
           </div>
         </div>
 
+        {/* ================= DETAILS ================= */}
         <div className="form-section">
-          <h3>Engagement Details</h3>
 
           <div className="form-group">
-            <label htmlFor="objective">Objective of MSL Engagement *</label>
+            <label>Objective *</label>
             <textarea
-              id="objective"
               name="objective"
               value={formData.objective}
               onChange={handleChange}
-              className="form-control"
-              rows="3"
-              placeholder="What is the main goal of this engagement?"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="expected_outcome">Expected Scientific Outcome</label>
+            <label>Expected Outcome</label>
             <textarea
-              id="expected_outcome"
               name="expected_outcome"
               value={formData.expected_outcome}
               onChange={handleChange}
-              className="form-control"
-              rows="3"
-              placeholder="What scientific outcomes do you expect from this engagement?"
             />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="priority">Priority</label>
-              <select
-                id="priority"
-                name="priority"
-                value={formData.priority}
-                onChange={handleChange}
-                className="form-control"
-              >
-                {PRIORITIES.map(p => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </div>
           </div>
 
           <div className="form-group">
-            <label htmlFor="notes">Additional Context / Notes</label>
+            <label>Priority</label>
+            <select name="priority" value={formData.priority} onChange={handleChange}>
+              {PRIORITIES.map(p => <option key={p}>{p}</option>)}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Notes</label>
             <textarea
-              id="notes"
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              className="form-control"
-              rows="3"
-              placeholder="Any additional information..."
             />
           </div>
+
         </div>
 
-        <div className="form-actions">
-          <button type="button" onClick={() => navigate('/dashboard')} className="btn-secondary">
-            Cancel
-          </button>
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Creating...' : 'Create Request'}
-          </button>
-        </div>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Creating...' : 'Create Request'}
+        </button>
+
       </form>
     </div>
   );
