@@ -11,30 +11,74 @@ const RequestList = () => {
   const [requests, setRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [filterClassification, setFilterClassification] = useState('All');
+
+  // ✅ NEW STATES
+  const [search, setSearch] = useState('');
+  const [filterTerritory, setFilterTerritory] = useState('');
+  const [filterRegion, setFilterRegion] = useState('');
+  const [filterTherapy, setFilterTherapy] = useState('');
 
   useEffect(() => {
     fetchRequests();
   }, [user]);
 
+  // ✅ UPDATED FILTER LOGIC (MERGED ALL FILTERS)
   useEffect(() => {
-    if (filterClassification === 'All') {
-      setFilteredRequests(requests);
-    } else {
-      setFilteredRequests(requests.filter(r => r.user_classification === filterClassification));
+    let data = requests;
+
+    // classification filter
+    if (filterClassification !== 'All') {
+      data = data.filter(r => r.user_classification === filterClassification);
     }
-  }, [filterClassification, requests]);
+
+    // search filter
+    if (search) {
+      data = data.filter(r =>
+        r.doctor_name?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // territory filter
+    if (filterTerritory) {
+      data = data.filter(r => r.territory === filterTerritory);
+    }
+
+    // region filter
+    if (filterRegion) {
+      data = data.filter(r => r.region === filterRegion);
+    }
+
+    // therapy filter
+    if (filterTherapy) {
+      data = data.filter(r => r.therapy_area === filterTherapy);
+    }
+
+    setFilteredRequests(data);
+
+  }, [filterClassification, search, filterTerritory, filterRegion, filterTherapy, requests]);
 
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const params = user?.role === 'BL' || user?.role === 'BM' 
+
+      const params = user?.role === 'BL' || user?.role === 'BM'
         ? { requested_by: user.username, role: user.role }
         : {};
-      
+
       const response = await requestService.getRequests(params);
+
+      console.log('=== FETCH REQUESTS ===');
+      console.log('Fetched requests count:', response.data.length);
+      if (response.data.length > 0) {
+        console.log('First request full data:', JSON.stringify(response.data[0], null, 2));
+      }
+      console.log('=== END FETCH ===');
+
       setRequests(response.data);
       setFilteredRequests(response.data);
+
     } catch (error) {
       console.error('Error fetching requests:', error);
     } finally {
@@ -61,6 +105,7 @@ const RequestList = () => {
 
   return (
     <div className="request-list-container">
+
       <div className="list-header">
         <h1>MSL Engagement Requests</h1>
         {(user?.role === 'BL' || user?.role === 'BM') && (
@@ -70,6 +115,7 @@ const RequestList = () => {
         )}
       </div>
 
+      {/* EXISTING CLASSIFICATION FILTER */}
       <div className="filter-bar">
         <label>Filter by Classification:</label>
         <div className="filter-buttons">
@@ -79,20 +125,51 @@ const RequestList = () => {
               className={`filter-btn ${filterClassification === classification ? 'active' : ''}`}
               onClick={() => setFilterClassification(classification)}
             >
-              {classification === 'All' ? 'All' : classification === 'potential' ? 'Potential User' : 'Not a Potential User'}
+              {classification === 'All'
+                ? 'All'
+                : classification === 'potential'
+                  ? 'Potential User'
+                  : 'Not a Potential User'}
             </button>
           ))}
         </div>
       </div>
 
+      {/* ✅ NEW FILTER BAR (YOUR CODE ADDED HERE) */}
+      <div className="filters">
+
+        <input
+          type="text"
+          placeholder="Search doctor..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        <select onChange={(e) => setFilterTerritory(e.target.value)} value={filterTerritory}>
+          <option value="">All Territories</option>
+          {[...new Set(requests.map(r => r.territory).filter(Boolean))].map(t => (
+            <option key={`terr-${t}`} value={t}>{t}</option>
+          ))}
+        </select>
+
+        <select onChange={(e) => setFilterRegion(e.target.value)} value={filterRegion}>
+          <option value="">All Regions</option>
+          {[...new Set(requests.map(r => r.region).filter(Boolean))].map(r => (
+            <option key={`reg-${r}`} value={r}>{r}</option>
+          ))}
+        </select>
+
+        <select onChange={(e) => setFilterTherapy(e.target.value)} value={filterTherapy}>
+          <option value="">All Therapy</option>
+          {[...new Set(requests.map(r => r.therapy_area).filter(Boolean))].map(t => (
+            <option key={`therapy-${t}`} value={t}>{t}</option>
+          ))}
+        </select>
+
+      </div>
       {filteredRequests.length === 0 ? (
         <div className="empty-state">
           <p>No requests found.</p>
-          {(user?.role === 'BL' || user?.role === 'BM') && (
-            <Link to="/requests/new" className="create-link">
-              Create your first request
-            </Link>
-          )}
         </div>
       ) : (
         <div className="requests-table-container">
@@ -101,6 +178,8 @@ const RequestList = () => {
               <tr>
                 <th>Request ID</th>
                 <th>Doctor</th>
+                <th>Territory</th> {/* ✅ ADDED */}
+                <th>Region</th>    {/* ✅ ADDED */}
                 <th>Therapy Area</th>
                 <th>Objective</th>
                 <th>Priority</th>
@@ -110,11 +189,14 @@ const RequestList = () => {
                 <th>Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {filteredRequests.map((request) => (
                 <tr key={request.id}>
                   <td>#{request.id}</td>
                   <td className="doctor-name">{request.doctor_name}</td>
+                  <td>{request.territory}</td> {/* ✅ */}
+                  <td>{request.region}</td>    {/* ✅ */}
                   <td>{request.therapy_area}</td>
                   <td className="objective-cell">
                     {request.objective?.substring(0, 50)}
@@ -127,7 +209,9 @@ const RequestList = () => {
                   </td>
                   <td>
                     <span className={`status-badge ${getClassificationClass(request.user_classification)}`}>
-                      {request.user_classification === 'potential' ? 'Potential User' : 'Not a Potential User'}
+                      {request.user_classification === 'potential'
+                        ? 'Potential User'
+                        : 'Not a Potential User'}
                     </span>
                   </td>
                   <td>{request.requested_by}</td>
@@ -140,6 +224,7 @@ const RequestList = () => {
                 </tr>
               ))}
             </tbody>
+
           </table>
         </div>
       )}
