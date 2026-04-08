@@ -8,14 +8,13 @@ const STATUSES = ['default', 'potential', 'non-potential'];
 const SCIENTIFIC_DEPTHS = ['Basic', 'Intermediate', 'Advanced', 'Expert'];
 const ENGAGEMENT_LEVELS = ['Low', 'Moderate', 'High', 'Very High'];
 
-
 const OUTCOME_OPTIONS = [
   'doctor appreciated the discussion',
   'doctor posted scientific query',
   'doctor asked to meet again',
   'doctor likely to be associated with pulse',
   'RX prescription initiated',
-  'no response'
+  'no response',
 ];
 
 const RequestDetail = () => {
@@ -37,10 +36,8 @@ const RequestDetail = () => {
     engagement_quality_participation: '',
     engagement_quality_objection: '',
     summary: '',
-    outcomes: ''
+    outcomes: '',
   });
-
-
 
   useEffect(() => {
     fetchRequestData();
@@ -51,7 +48,7 @@ const RequestDetail = () => {
       setLoading(true);
       const [requestRes, logsRes] = await Promise.all([
         requestService.getRequest(id),
-        requestService.getLogs(id)
+        requestService.getLogs(id),
       ]);
       const requestData = requestRes.data;
       // Map user_classification to status for UI consistency
@@ -63,9 +60,9 @@ const RequestDetail = () => {
 
       // Pre-fill doctor name for interaction form
       if (requestRes.data.doctor) {
-        setInteractionForm(prev => ({
+        setInteractionForm((prev) => ({
           ...prev,
-          doctor_name: requestRes.data.doctor.name
+          doctor_name: requestRes.data.doctor.name,
         }));
       }
     } catch (error) {
@@ -75,13 +72,53 @@ const RequestDetail = () => {
     }
   };
 
+  /**
+   * Handle status change with enhanced error handling
+   * @param {string} newStatus - The new status value ('potential', 'non-potential', 'default')
+   */
   const handleStatusChange = async (newStatus) => {
     try {
-      await requestService.updateStatus(id, newStatus);
-      setRequest(prev => ({ ...prev, status: newStatus }));
+      // Call the API service to update status
+      const response = await requestService.updateStatus(id, newStatus);
+
+      // Update local state on success
+      setRequest((prev) => ({ ...prev, status: newStatus }));
+
+      // Show success feedback (optional - can be removed for production)
+      console.log('Status updated successfully:', response.data);
     } catch (error) {
-      console.error('Error updating status:', error);
-      alert('Failed to update status');
+      // Enhanced error handling with specific messages
+      let errorMessage = 'Failed to update status';
+
+      if (error.response) {
+        // Server responded with error status
+        const { status, data } = error.response;
+
+        if (status === 400) {
+          errorMessage =
+            data?.detail || 'Invalid request. Please check the status value.';
+        } else if (status === 404) {
+          errorMessage = 'Request not found. It may have been deleted.';
+        } else if (status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+
+        console.error(`Status update failed (${status}):`, data);
+      } else if (error.request) {
+        // Request made but no response received
+        errorMessage = 'Network error. Please check your connection.';
+        console.error('Network error - no response received:', error.request);
+      } else {
+        // Something else happened
+        errorMessage = error.message || 'An unexpected error occurred';
+        console.error('Error:', error.message);
+      }
+
+      // Show user-friendly error
+      alert(errorMessage);
+
+      // Re-throw if you want calling code to handle it too
+      throw error;
     }
   };
 
@@ -90,7 +127,7 @@ const RequestDetail = () => {
     try {
       const submissionData = {
         ...interactionForm,
-        request_id: parseInt(id)
+        request_id: parseInt(id),
       };
       await interactionService.createInteraction(submissionData);
       setShowInteractionForm(false);
@@ -103,7 +140,7 @@ const RequestDetail = () => {
         engagement_quality_participation: '',
         engagement_quality_objection: '',
         summary: '',
-        outcomes: ''
+        outcomes: '',
       });
       fetchRequestData();
     } catch (error) {
@@ -112,13 +149,11 @@ const RequestDetail = () => {
     }
   };
 
-
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
       day: '2-digit',
       month: 'long',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
@@ -135,19 +170,34 @@ const RequestDetail = () => {
     return <div className="error">Request not found</div>;
   }
 
-  const canLogActivities = user?.role === 'MSL' || user?.role === 'Scientific Officer';
-  const canChangeStatus = ['MSL', 'Scientific Officer', 'Asst General Manager', 'Associate Vice President', 'SBUH/BH'].includes(user?.role);
+  const canLogActivities =
+    user?.role === 'MSL' || user?.role === 'Scientific Officer';
+  const canChangeStatus = [
+    'MSL',
+    'Scientific Officer',
+    'Asst General Manager',
+    'Associate Vice President',
+    'SBUH/BH',
+  ].includes(user?.role);
 
   return (
     <div className="request-detail-container">
       <div className="detail-header">
         <div className="header-left">
-          <Link to="/requests" className="back-link">← Back to Requests</Link>
+          <Link to="/requests" className="back-link">
+            ← Back to Requests
+          </Link>
           <h1>Request #{request.id}</h1>
         </div>
         <div className="header-right">
-          <span className={`status-badge-large ${getStatusClass(request.status)}`}>
-            {request.status === 'potential' ? 'Potential User' : request.status === 'non-potential' ? 'Not a Potential User' : 'Default User'}
+          <span
+            className={`status-badge-large ${getStatusClass(request.status)}`}
+          >
+            {request.status === 'potential'
+              ? 'Potential User'
+              : request.status === 'non-potential'
+                ? 'Not a Potential User'
+                : 'Default User'}
           </span>
           {canChangeStatus && (
             <select
@@ -155,9 +205,13 @@ const RequestDetail = () => {
               onChange={(e) => handleStatusChange(e.target.value)}
               className="status-select"
             >
-              {STATUSES.map(s => (
+              {STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {s === 'potential' ? 'Potential User' : s === 'non-potential' ? 'Not a Potential User' : 'Default User'}
+                  {s === 'potential'
+                    ? 'Potential User'
+                    : s === 'non-potential'
+                      ? 'Not a Potential User'
+                      : 'Default'}
                 </option>
               ))}
             </select>
@@ -169,23 +223,31 @@ const RequestDetail = () => {
         <div className="info-grid">
           <div className="info-item">
             <label>Doctor</label>
-            <value>{request.doctor?.name}</value>
+            <span className="info-value">{request.doctor?.name}</span>
           </div>
           <div className="info-item">
             <label>Therapy Area</label>
-            <value>{request.therapy_area}</value>
+            <span className="info-value">{request.therapy_area}</span>
           </div>
           <div className="info-item">
             <label>Priority</label>
-            <value className={`priority ${(request.priority || '').toLowerCase()}`}>{request.priority || 'Normal'}</value>
+            <span
+              className={`info-value priority ${(request.priority || '').toLowerCase()}`}
+            >
+              {request.priority || 'Normal'}
+            </span>
           </div>
           <div className="info-item">
             <label>Requested By</label>
-            <value>{request.requested_by} ({request.requested_by_role})</value>
+            <span className="info-value">
+              {request.requested_by} ({request.requested_by_role})
+            </span>
           </div>
           <div className="info-item">
             <label>Created</label>
-            <value>{formatDate(request.created_at)}</value>
+            <span className="info-value">
+              {formatDate(request.created_at)}
+            </span>
           </div>
         </div>
         <div className="info-section">
@@ -245,15 +307,15 @@ const RequestDetail = () => {
               </div>
             ) : (
               <div className="timeline">
-                {logs.map((log, index) => (
+                {logs.map((log) => (
                   <div key={`${log.type}-${log.id}`} className="timeline-item">
                     <div className={`timeline-dot ${log.type}`}></div>
                     <div className="timeline-content">
                       <div className="timeline-header">
-                        <span className="timeline-type">
-                          👨‍⚕️ Doctor Visit
+                        <span className="timeline-type">👨‍⚕️ Doctor Visit</span>
+                        <span className="timeline-date">
+                          {formatDate(log.date)}
                         </span>
-                        <span className="timeline-date">{formatDate(log.date)}</span>
                       </div>
                       <h4>{log.title}</h4>
                       {log.details && <p>{log.details}</p>}
@@ -280,27 +342,46 @@ const RequestDetail = () => {
             </div>
 
             {request.doctor_interactions?.length === 0 ? (
-              <div className="empty-state">No doctor interactions logged yet.</div>
+              <div className="empty-state">
+                No doctor interactions logged yet.
+              </div>
             ) : (
               <div className="interactions-list">
-                {request.doctor_interactions?.map(interaction => (
+                {request.doctor_interactions?.map((interaction) => (
                   <div key={interaction.id} className="interaction-card">
                     <div className="interaction-header">
                       <h4>{interaction.doctor_name}</h4>
-                      <span className="date">{formatDate(interaction.visit_date)}</span>
+                      <span className="date">
+                        {formatDate(interaction.visit_date)}
+                      </span>
                     </div>
                     <div className="interaction-details">
-                      <p><strong>Topics:</strong> {interaction.topics_discussed}</p>
-                      <p><strong>Scientific Depth:</strong> {interaction.scientific_depth}</p>
+                      <p>
+                        <strong>Topics:</strong>{' '}
+                        {interaction.topics_discussed}
+                      </p>
+                      <p>
+                        <strong>Scientific Depth:</strong>{' '}
+                        {interaction.scientific_depth}
+                      </p>
                       <div className="engagement-quality">
                         <label>Engagement Quality:</label>
                         <div className="quality-badges">
-                          <span>Interest: {interaction.engagement_quality_interest}</span>
-                          <span>Participation: {interaction.engagement_quality_participation}</span>
-                          <span>Objection: {interaction.engagement_quality_objection}</span>
+                          <span>
+                            Interest: {interaction.engagement_quality_interest}
+                          </span>
+                          <span>
+                            Participation:{" "}
+                            {interaction.engagement_quality_participation}
+                          </span>
+                          <span>
+                            Objection: {interaction.engagement_quality_objection}
+                          </span>
                         </div>
                       </div>
-                      <p className="summary"><strong>Summary:</strong> {interaction.summary}</p>
+                      <p className="summary">
+                        <strong>Summary:</strong> {interaction.summary}
+                      </p>
                       {interaction.outcomes && (
                         <p className="outcomes" style={{ marginTop: '5px' }}>
                           <strong>Outcome:</strong> {interaction.outcomes}
@@ -313,14 +394,15 @@ const RequestDetail = () => {
             )}
           </div>
         )}
-
-
       </div>
 
       {/* Doctor Interaction Modal */}
       {showInteractionForm && (
-        <div className="modal-overlay" onClick={() => setShowInteractionForm(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowInteractionForm(false)}
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Log Doctor Interaction</h2>
             <form onSubmit={handleInteractionSubmit}>
               <div className="form-group">
@@ -328,7 +410,12 @@ const RequestDetail = () => {
                 <input
                   type="text"
                   value={interactionForm.doctor_name}
-                  onChange={e => setInteractionForm({ ...interactionForm, doctor_name: e.target.value })}
+                  onChange={(e) =>
+                    setInteractionForm({
+                      ...interactionForm,
+                      doctor_name: e.target.value,
+                    })
+                  }
                   className="form-control"
                   required
                 />
@@ -338,7 +425,12 @@ const RequestDetail = () => {
                 <input
                   type="date"
                   value={interactionForm.visit_date}
-                  onChange={e => setInteractionForm({ ...interactionForm, visit_date: e.target.value })}
+                  onChange={(e) =>
+                    setInteractionForm({
+                      ...interactionForm,
+                      visit_date: e.target.value,
+                    })
+                  }
                   className="form-control"
                   required
                 />
@@ -347,7 +439,12 @@ const RequestDetail = () => {
                 <label>Topics Discussed</label>
                 <textarea
                   value={interactionForm.topics_discussed}
-                  onChange={e => setInteractionForm({ ...interactionForm, topics_discussed: e.target.value })}
+                  onChange={(e) =>
+                    setInteractionForm({
+                      ...interactionForm,
+                      topics_discussed: e.target.value,
+                    })
+                  }
                   className="form-control"
                   rows="2"
                 />
@@ -356,12 +453,19 @@ const RequestDetail = () => {
                 <label>Scientific Depth</label>
                 <select
                   value={interactionForm.scientific_depth}
-                  onChange={e => setInteractionForm({ ...interactionForm, scientific_depth: e.target.value })}
+                  onChange={(e) =>
+                    setInteractionForm({
+                      ...interactionForm,
+                      scientific_depth: e.target.value,
+                    })
+                  }
                   className="form-control"
                 >
                   <option value="">Select</option>
-                  {SCIENTIFIC_DEPTHS.map(d => (
-                    <option key={d} value={d}>{d}</option>
+                  {SCIENTIFIC_DEPTHS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -370,12 +474,19 @@ const RequestDetail = () => {
                   <label>Interest in Clinical Data</label>
                   <select
                     value={interactionForm.engagement_quality_interest}
-                    onChange={e => setInteractionForm({ ...interactionForm, engagement_quality_interest: e.target.value })}
+                    onChange={(e) =>
+                      setInteractionForm({
+                        ...interactionForm,
+                        engagement_quality_interest: e.target.value,
+                      })
+                    }
                     className="form-control"
                   >
                     <option value="">Select</option>
-                    {ENGAGEMENT_LEVELS.map(l => (
-                      <option key={l} value={l}>{l}</option>
+                    {ENGAGEMENT_LEVELS.map((l) => (
+                      <option key={l} value={l}>
+                        {l}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -383,12 +494,19 @@ const RequestDetail = () => {
                   <label>Participation Level</label>
                   <select
                     value={interactionForm.engagement_quality_participation}
-                    onChange={e => setInteractionForm({ ...interactionForm, engagement_quality_participation: e.target.value })}
+                    onChange={(e) =>
+                      setInteractionForm({
+                        ...interactionForm,
+                        engagement_quality_participation: e.target.value,
+                      })
+                    }
                     className="form-control"
                   >
                     <option value="">Select</option>
-                    {ENGAGEMENT_LEVELS.map(l => (
-                      <option key={l} value={l}>{l}</option>
+                    {ENGAGEMENT_LEVELS.map((l) => (
+                      <option key={l} value={l}>
+                        {l}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -396,12 +514,19 @@ const RequestDetail = () => {
                   <label>Objection Complexity</label>
                   <select
                     value={interactionForm.engagement_quality_objection}
-                    onChange={e => setInteractionForm({ ...interactionForm, engagement_quality_objection: e.target.value })}
+                    onChange={(e) =>
+                      setInteractionForm({
+                        ...interactionForm,
+                        engagement_quality_objection: e.target.value,
+                      })
+                    }
                     className="form-control"
                   >
                     <option value="">Select</option>
-                    {ENGAGEMENT_LEVELS.map(l => (
-                      <option key={l} value={l}>{l}</option>
+                    {ENGAGEMENT_LEVELS.map((l) => (
+                      <option key={l} value={l}>
+                        {l}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -410,12 +535,19 @@ const RequestDetail = () => {
                 <label>Outcome</label>
                 <select
                   value={interactionForm.outcomes}
-                  onChange={e => setInteractionForm({ ...interactionForm, outcomes: e.target.value })}
+                  onChange={(e) =>
+                    setInteractionForm({
+                      ...interactionForm,
+                      outcomes: e.target.value,
+                    })
+                  }
                   className="form-control"
                 >
                   <option value="">Select Outcome</option>
-                  {OUTCOME_OPTIONS.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
+                  {OUTCOME_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -423,23 +555,32 @@ const RequestDetail = () => {
                 <label>Summary of Discussion</label>
                 <textarea
                   value={interactionForm.summary}
-                  onChange={e => setInteractionForm({ ...interactionForm, summary: e.target.value })}
+                  onChange={(e) =>
+                    setInteractionForm({
+                      ...interactionForm,
+                      summary: e.target.value,
+                    })
+                  }
                   className="form-control"
                   rows="3"
                 />
               </div>
               <div className="modal-actions">
-                <button type="button" onClick={() => setShowInteractionForm(false)} className="btn-secondary">
+                <button
+                  type="button"
+                  onClick={() => setShowInteractionForm(false)}
+                  className="btn-secondary"
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary">Save Interaction</button>
+                <button type="submit" className="btn-primary">
+                  Save Interaction
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-
     </div>
   );
 };
