@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { requestService } from '../services/api';
 import '../styles/RequestList.css';
 
-const CLASSIFICATIONS = ['All', 'potential', 'non-potential'];
+const CLASSIFICATIONS = ['All', 'potential', 'non-potential', 'default'];
 
 const RequestList = () => {
   const { user } = useAuth();
@@ -12,13 +12,12 @@ const RequestList = () => {
   const [filteredRequests, setFilteredRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [filterClassification, setFilterClassification] = useState('All');
-
   // ✅ NEW STATES
   const [search, setSearch] = useState('');
   const [filterTerritory, setFilterTerritory] = useState('');
   const [filterRegion, setFilterRegion] = useState('');
   const [filterTherapy, setFilterTherapy] = useState('');
+  const [filterClassification, setFilterClassification] = useState('All');
 
   useEffect(() => {
     fetchRequests();
@@ -86,11 +85,6 @@ const RequestList = () => {
     }
   };
 
-  const getClassificationClass = (classification) => {
-    if (!classification) return '';
-    return classification.toLowerCase().replace(' ', '-');
-  };
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
       day: '2-digit',
@@ -115,7 +109,7 @@ const RequestList = () => {
         )}
       </div>
 
-      {/* EXISTING CLASSIFICATION FILTER */}
+      {/* ✅ CLASSIFICATION FILTER */}
       <div className="filter-bar">
         <label>Filter by Classification:</label>
         <div className="filter-buttons">
@@ -129,13 +123,15 @@ const RequestList = () => {
                 ? 'All'
                 : classification === 'potential'
                   ? 'Potential User'
-                  : 'Not a Potential User'}
+                  : classification === 'non-potential'
+                    ? 'Not a Potential User'
+                    : 'Default'}
             </button>
           ))}
         </div>
       </div>
 
-      {/* ✅ NEW FILTER BAR (YOUR CODE ADDED HERE) */}
+      {/* ✅ FILTER BAR */}
       <div className="filters">
 
         <input
@@ -208,10 +204,10 @@ const RequestList = () => {
                     </span>
                   </td>
                   <td>
-                    <span className={`status-badge ${getClassificationClass(request.user_classification)}`}>
-                      {request.user_classification === 'potential'
-                        ? 'Potential User'
-                        : 'Not a Potential User'}
+                    <span className={`status-badge ${request.user_classification?.toLowerCase().replace(' ', '-') || 'default'}`}>
+                      {request.user_classification === 'potential' ? 'Potential User' :
+                        request.user_classification === 'non-potential' ? 'Not a Potential User' :
+                          'Default User'}
                     </span>
                   </td>
                   <td>{request.requested_by}</td>

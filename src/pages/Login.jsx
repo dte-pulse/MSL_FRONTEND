@@ -25,10 +25,12 @@ const Login = () => {
 
     try {
       const response = await authService.login(employeeId, password);
-      login({ 
-        username: response.data.username, 
-        role: response.data.role,
-        employee_id: response.data.employee_id 
+      const data = response.data;
+
+      login({
+        username: data.username,
+        role: data.role,
+        employee_id: data.employee_id
       });
       navigate('/dashboard');
     } catch (err) {

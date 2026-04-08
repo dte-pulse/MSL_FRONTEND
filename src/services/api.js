@@ -31,7 +31,6 @@ export const requestService = {
     const queryParams = new URLSearchParams();
     if (params.requested_by) queryParams.append('requested_by', params.requested_by);
     if (params.role) queryParams.append('role', params.role);
-    if (params.user_classification) queryParams.append('user_classification', params.user_classification);
 
     return api.get(`/requests?${queryParams.toString()}`);
   },

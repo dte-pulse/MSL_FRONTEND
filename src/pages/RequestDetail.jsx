@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { requestService, interactionService } from '../services/api';
 import '../styles/RequestDetail.css';
 
-const STATUSES = ['potential', 'non-potential'];
+const STATUSES = ['default', 'potential', 'non-potential'];
 const SCIENTIFIC_DEPTHS = ['Basic', 'Intermediate', 'Advanced', 'Expert'];
 const ENGAGEMENT_LEVELS = ['Low', 'Moderate', 'High', 'Very High'];
 
@@ -58,7 +58,6 @@ const RequestDetail = () => {
       if (requestData.user_classification) {
         requestData.status = requestData.user_classification;
       }
-      
       setRequest(requestData);
       setLogs(logsRes.data);
 
@@ -137,7 +136,7 @@ const RequestDetail = () => {
   }
 
   const canLogActivities = user?.role === 'MSL' || user?.role === 'Scientific Officer';
-  const canChangeStatus = ['Asst General Manager', 'Associate Vice President', 'SBUH/BH'].includes(user?.role);
+  const canChangeStatus = ['MSL', 'Scientific Officer', 'Asst General Manager', 'Associate Vice President', 'SBUH/BH'].includes(user?.role);
 
   return (
     <div className="request-detail-container">
@@ -148,7 +147,7 @@ const RequestDetail = () => {
         </div>
         <div className="header-right">
           <span className={`status-badge-large ${getStatusClass(request.status)}`}>
-            {request.status === 'potential' ? 'Potential User' : 'Not a Potential User'}
+            {request.status === 'potential' ? 'Potential User' : request.status === 'non-potential' ? 'Not a Potential User' : 'Default User'}
           </span>
           {canChangeStatus && (
             <select
@@ -158,7 +157,7 @@ const RequestDetail = () => {
             >
               {STATUSES.map(s => (
                 <option key={s} value={s}>
-                  {s === 'potential' ? 'Potential User' : 'Not a Potential User'}
+                  {s === 'potential' ? 'Potential User' : s === 'non-potential' ? 'Not a Potential User' : 'Default User'}
                 </option>
               ))}
             </select>
@@ -213,13 +212,13 @@ const RequestDetail = () => {
           >
             Activity Summary
           </button>
-            <button
-              className={`tab ${activeTab === 'interactions' ? 'active' : ''}`}
-              onClick={() => setActiveTab('interactions')}
-            >
-              Doctor Interactions ({request.doctor_interactions?.length || 0})
-            </button>
-          </div>
+          <button
+            className={`tab ${activeTab === 'interactions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('interactions')}
+          >
+            Doctor Interactions ({request.doctor_interactions?.length || 0})
+          </button>
+        </div>
 
         {activeTab === 'summary' && (
           <div className="tab-content">
@@ -252,7 +251,7 @@ const RequestDetail = () => {
                     <div className="timeline-content">
                       <div className="timeline-header">
                         <span className="timeline-type">
-                           👨‍⚕️ Doctor Visit
+                          👨‍⚕️ Doctor Visit
                         </span>
                         <span className="timeline-date">{formatDate(log.date)}</span>
                       </div>

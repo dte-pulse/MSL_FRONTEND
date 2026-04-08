@@ -8,8 +8,6 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     totalRequests: 0,
-    potentialRequests: 0,
-    nonPotentialRequests: 0,
   });
   const [recentRequests, setRecentRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,8 +43,6 @@ const Dashboard = () => {
 
       setStats({
         totalRequests: requests.length,
-        potentialRequests: requests.filter(r => r.user_classification === 'potential').length,
-        nonPotentialRequests: requests.filter(r => r.user_classification === 'non-potential').length,
       });
 
       setRecentRequests(requests.slice(0, 5));
@@ -79,14 +75,6 @@ const Dashboard = () => {
           <h3>{stats.totalRequests}</h3>
           <p>Total Requests</p>
         </div>
-        <div className="stat-card pending">
-          <h3>{stats.potentialRequests}</h3>
-          <p>Potential Users</p>
-        </div>
-        <div className="stat-card completed">
-          <h3>{stats.nonPotentialRequests}</h3>
-          <p>Not a Potential User</p>
-        </div>
       </div>
 
       <div className="recent-section">
@@ -108,9 +96,6 @@ const Dashboard = () => {
                   <p>{request.therapy_area} • {request.objective?.substring(0, 50)}...</p>
                 </div>
                 <div className="recent-meta">
-                  <span className={`status-badge ${request.user_classification === 'potential' ? 'potential' : 'non-potential'}`}>
-                    {request.user_classification === 'potential' ? 'Potential User' : 'Not a Potential User'}
-                  </span>
                   <span className="priority-badge">{request.priority}</span>
                 </div>
               </Link>

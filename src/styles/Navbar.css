@@ -72,6 +72,133 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* User Classification Badge */
+.user-classification {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-top: 2px;
+}
+
+/* Reclassify Button */
+.reclassify-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+
+.reclassify-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Reclassify Dropdown */
+.reclassify-dropdown {
+  position: absolute;
+  top: 75px;
+  right: 30px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 0;
+  min-width: 220px;
+  z-index: 1000;
+  border: 1px solid #e0e0e0;
+}
+
+.reclassify-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px 8px 0 0;
+}
+
+.reclassify-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.reclassify-error {
+  color: #e74c3c;
+  font-size: 12px;
+  padding: 8px 16px;
+  background: #fdf2f2;
+  border-bottom: 1px solid #f5cccc;
+}
+
+.reclassify-content {
+  padding: 16px;
+}
+
+.reclassify-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  background: white;
+  cursor: pointer;
+}
+
+.reclassify-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.reclassify-select:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.reclassify-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.reclassify-cancel,
+.reclassify-confirm {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: none;
+}
+
+.reclassify-cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.reclassify-cancel:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.reclassify-confirm {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.reclassify-confirm:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.reclassify-cancel:disabled,
+.reclassify-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .navbar {
     padding: 0 15px;
@@ -87,5 +214,11 @@
     justify-content: center;
     margin-top: 15px;
     gap: 15px;
+  }
+
+  .reclassify-dropdown {
+    right: 15px;
+    left: 15px;
+    min-width: auto;
   }
 }

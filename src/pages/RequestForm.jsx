@@ -32,7 +32,6 @@ const RequestForm = () => {
     expected_outcome: '',
     priority: 'Medium',
     notes: '',
-    user_classification: 'potential',
     requested_by: '',
     requested_by_role: '',
   });
@@ -221,8 +220,7 @@ const RequestForm = () => {
         priority: formData.priority,
         notes: formData.notes,
         requested_by: user.username,
-        requested_by_role: user.role,
-        user_classification: formData.user_classification
+        requested_by_role: user.role
       };
 
       console.log('Request payload to be sent:', JSON.stringify(requestPayload, null, 2));
@@ -335,19 +333,6 @@ const RequestForm = () => {
               value={formData.notes}
               onChange={handleChange}
             />
-          </div>
-
-          <div className="form-group">
-            <label>User Classification</label>
-            <select
-              className="form-control"
-              name="user_classification"
-              value={formData.user_classification}
-              onChange={handleChange}
-            >
-              <option value="potential">Potential User</option>
-              <option value="non-potential">Not a Potential User</option>
-            </select>
           </div>
         </div>
 
